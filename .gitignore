@@ -1,0 +1,33 @@
+# Entornos virtuales
+.venv/
+env/
+venv/
+.pyenv/
+
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+
+# Configuración local
+*.env
+.env.*
+.DS_Store
+
+# Alembic
+alembic/versions/*.pyc
+alembic/versions/__pycache__/
+
+# Logs
+*.log
+logs/
+*.out
+
+# IDEs
+.vscode/
+.idea/
+
+# Render/Deploy
+start.sh
