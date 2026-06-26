@@ -1,30 +1,86 @@
 from sqlalchemy.orm import Session
-from app.models.assessment import Assessment
+
 from app.models.answer import Answer
+from app.models.assessment import Assessment
+from app.models.company import Company
+from app.models.recommendation import Recommendation
+from app.schemas.assessment import AssessmentCreate, RecommendationCreate
+
 
 def get_assessment(db: Session, assessment_id: int):
     assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
-    answers = db.query(Answer).filter(Answer.assessment_id == assessment_id).all()
+    if not assessment:
+        return None, []
+    answers = (
+        db.query(Answer)
+        .filter(Answer.assessment_id == assessment_id)
+        .order_by(Answer.question_number)
+        .all()
+    )
     return assessment, answers
 
-def create_assessment(db: Session, assessment):
-    new_assessment = Assessment(
-        company_id=assessment.company.id,
-        score=assessment.score
+
+def create_assessment(db: Session, payload: AssessmentCreate) -> Assessment:
+    company = Company(
+        name=payload.company.name,
+        email=payload.company.email,
+        nit=payload.company.nit,
+        sector=payload.company.sector,
     )
-    db.add(new_assessment)
-    db.commit()
-    db.refresh(new_assessment)
-    return new_assessment
+    db.add(company)
+    db.flush()
 
-def update_assessment(db: Session, assessment_id: int, assessment):
-    db_assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
-    db_assessment.score = assessment.score
-    db.commit()
-    db.refresh(db_assessment)
-    return db_assessment
+    assessment = Assessment(company_id=company.id, score=payload.score)
+    db.add(assessment)
+    db.flush()
 
-def delete_assessment(db: Session, assessment_id: int):
-    db_assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
-    db.delete(db_assessment)
+    for item in payload.answers:
+        db.add(
+            Answer(
+                assessment_id=assessment.id,
+                question_number=item.question_number,
+                answer=item.answer,
+            )
+        )
+
     db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def update_assessment(db: Session, assessment_id: int, score: float) -> Assessment | None:
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    if not assessment:
+        return None
+    assessment.score = score
+    db.commit()
+    db.refresh(assessment)
+    return assessment
+
+
+def delete_assessment(db: Session, assessment_id: int) -> bool:
+    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    if not assessment:
+        return False
+    db.delete(assessment)
+    db.commit()
+    return True
+
+
+def get_recommendation(db: Session, assessment_id: int) -> Recommendation | None:
+    return (
+        db.query(Recommendation)
+        .filter(Recommendation.assessment_id == assessment_id)
+        .first()
+    )
+
+
+def create_recommendation(db: Session, payload: RecommendationCreate) -> Recommendation:
+    recommendation = Recommendation(
+        assessment_id=payload.assessment_id,
+        report=payload.report,
+    )
+    db.add(recommendation)
+    db.commit()
+    db.refresh(recommendation)
+    return recommendation

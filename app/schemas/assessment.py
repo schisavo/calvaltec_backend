@@ -1,16 +1,56 @@
-from pydantic import BaseModel
-from typing import List
+from datetime import datetime
+from typing import Any
 
-class CompanyOut(BaseModel):
-    id: int
+from pydantic import BaseModel, Field
+
+
+class CompanyCreate(BaseModel):
     name: str
+    email: str
+    nit: str
+    sector: str
 
-class AnswerOut(BaseModel):
-    question: str
+
+class CompanyOut(CompanyCreate):
+    id: int
+    created_at: datetime
+
+
+class AnswerCreate(BaseModel):
+    question_number: int = Field(ge=1, le=8)
     answer: bool
 
+
+class AnswerOut(AnswerCreate):
+    id: int
+
+
+class AssessmentCreate(BaseModel):
+    company: CompanyCreate
+    score: float
+    answers: list[AnswerCreate]
+
+
+class AssessmentUpdate(BaseModel):
+    score: float
+
+
 class AssessmentOut(BaseModel):
-    assessment_id: int
+    id: int
+    company_id: int
     company: CompanyOut
     score: float
-    answers: List[AnswerOut]
+    created_at: datetime
+    answers: list[AnswerOut]
+
+
+class RecommendationCreate(BaseModel):
+    assessment_id: int
+    report: dict[str, Any]
+
+
+class RecommendationOut(BaseModel):
+    id: int
+    assessment_id: int
+    report: dict[str, Any]
+    created_at: datetime

@@ -1,13 +1,25 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.v1 import assessments
+
+from app.api.v1 import assessments, auth
+from app.core.database import init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 
 app = FastAPI(
     title="FastAPI Supabase Demo",
     description="API REST con FastAPI + Supabase",
     version="0.1.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -27,6 +39,7 @@ def ping():
     return {"status": "ok"}
 
 # Aquí se agregan las rutas del CRUD
+app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 
 
