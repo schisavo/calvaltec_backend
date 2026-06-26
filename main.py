@@ -1,13 +1,10 @@
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.api.v1 import assessments, auth
 from app.api.v1 import recommendations
-
+from app.api.v1 import users
 from app.core.database import init_db
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,8 +35,9 @@ def root():
 
 # Aquí se agregan las rutas del CRUD
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
-app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 
+app.include_router(users.router, prefix="/api/v1", tags=["users"])
+app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
 
 

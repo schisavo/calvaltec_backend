@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.schemas.recommendation import RecommendationCreate, RecommendationOut
-from app.services.recommendation_service import create_recommendation_data, get_recommendation_data
+from app.services.recommendation_service import (
+    create_recommendation_data,
+    get_recommendation_by_id,
+    get_recommendation_by_assessment,
+    update_recommendation_data,
+    delete_recommendation_data
+)
 
 router = APIRouter()
 
@@ -10,6 +16,18 @@ router = APIRouter()
 def create_recommendation(payload: RecommendationCreate, db: Session = Depends(get_db)):
     return create_recommendation_data(db, payload)
 
-@router.get("/recommendations/{assessment_id}", response_model=RecommendationOut)
-def read_recommendation(assessment_id: int, db: Session = Depends(get_db)):
-    return get_recommendation_data(db, assessment_id)
+@router.get("/recommendations/{recommendation_id}", response_model=RecommendationOut)
+def read_recommendation(recommendation_id: int, db: Session = Depends(get_db)):
+    return get_recommendation_by_id(db, recommendation_id)
+
+@router.get("/assessments/{assessment_id}/recommendations", response_model=RecommendationOut)
+def read_recommendation_by_assessment(assessment_id: int, db: Session = Depends(get_db)):
+    return get_recommendation_by_assessment(db, assessment_id)
+
+@router.put("/recommendations/{recommendation_id}", response_model=RecommendationOut)
+def update_recommendation(recommendation_id: int, report: dict, db: Session = Depends(get_db)):
+    return update_recommendation_data(db, recommendation_id, report)
+
+@router.delete("/recommendations/{recommendation_id}")
+def delete_recommendation(recommendation_id: int, db: Session = Depends(get_db)):
+    return delete_recommendation_data(db, recommendation_id)
