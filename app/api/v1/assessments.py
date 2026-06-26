@@ -11,10 +11,8 @@ from app.schemas.assessment import (
 )
 from app.services.assessment_service import (
     create_assessment_data,
-    create_recommendation_data,
     delete_assessment_data,
     get_assessment_data,
-    get_recommendation_data,
     update_assessment_data,
 )
 
@@ -51,25 +49,3 @@ def update_assessment_endpoint(
 @router.delete("/assessments/{assessment_id}")
 def delete_assessment_endpoint(assessment_id: int, db: Session = Depends(get_db)):
     return delete_assessment_data(db, assessment_id)
-
-
-@router.get(
-    "/assessments/{assessment_id}/recommendation",
-    response_model=RecommendationOut,
-)
-def read_recommendation(assessment_id: int, db: Session = Depends(get_db)):
-    return get_recommendation_data(db, assessment_id)
-
-
-@router.post(
-    "/assessments/{assessment_id}/recommendation",
-    response_model=RecommendationOut,
-    status_code=201,
-)
-def create_recommendation_endpoint(
-    assessment_id: int,
-    report: dict = Body(...),
-    db: Session = Depends(get_db),
-):
-    payload = RecommendationCreate(assessment_id=assessment_id, report=report)
-    return create_recommendation_data(db, payload)

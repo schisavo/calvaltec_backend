@@ -65,22 +65,3 @@ def delete_assessment(db: Session, assessment_id: int) -> bool:
     db.delete(assessment)
     db.commit()
     return True
-
-
-def get_recommendation(db: Session, assessment_id: int) -> Recommendation | None:
-    return (
-        db.query(Recommendation)
-        .filter(Recommendation.assessment_id == assessment_id)
-        .first()
-    )
-
-
-def create_recommendation(db: Session, payload: RecommendationCreate) -> Recommendation:
-    recommendation = Recommendation(
-        assessment_id=payload.assessment_id,
-        report=payload.report,
-    )
-    db.add(recommendation)
-    db.commit()
-    db.refresh(recommendation)
-    return recommendation
