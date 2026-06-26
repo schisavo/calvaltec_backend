@@ -36,10 +36,6 @@ app.add_middleware(
 def root():
     return {"message": "API funcionando en Render 🚀"}
 
-@app.get("/ping")
-def ping():
-    return {"status": "ok"}
-
 # Aquí se agregan las rutas del CRUD
 app.include_router(auth.router, prefix="/api/v1", tags=["auth"])
 app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
