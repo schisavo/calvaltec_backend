@@ -27,8 +27,13 @@ class Settings(BaseSettings):
     N8N_RECOMMENDATIONS_WEBHOOK_URL: str = (
         "https://smartteam2026.app.n8n.cloud/webhook/generate-recommendations"
     )
-    FRONTEND_URL: str = "http://localhost:5173"
-    BACKEND_PUBLIC_URL: str | None = None
+    FRONTEND_URL: str
+    BACKEND_PUBLIC_URL: str
+
+    @field_validator("FRONTEND_URL", "BACKEND_PUBLIC_URL", mode="after")
+    @classmethod
+    def strip_trailing_slash(cls, value: str) -> str:
+        return value.rstrip("/")
 
     @field_validator("DATABASE_URL", mode="after")
     @classmethod

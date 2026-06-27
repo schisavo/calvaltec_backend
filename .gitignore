@@ -14,6 +14,7 @@ __pycache__/
 # Configuración local
 *.env
 .env.*
+!.env.example
 .DS_Store
 
 # Alembic

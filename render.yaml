@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: calvaltec-backend
+    env: python
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: FRONTEND_URL
+        value: https://ftn-hackathon-44tv.onrender.com
+      - key: BACKEND_PUBLIC_URL
+        value: https://calvaltec-backend.onrender.com
+      - key: N8N_CHAT_WEBHOOK_URL
+        value: https://smartteam2026.app.n8n.cloud/webhook/chat-assistant
+      - key: N8N_RECOMMENDATIONS_WEBHOOK_URL
+        value: https://smartteam2026.app.n8n.cloud/webhook/generate-recommendations
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: API_KEY_SECRET
+        sync: false
