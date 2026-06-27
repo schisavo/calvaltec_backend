@@ -20,7 +20,7 @@ class CompanyOut(CompanyCreate):
 
 
 class AnswerCreate(BaseModel):
-    question_number: int = Field(ge=1, le=8)
+    question_number: int = Field(ge=1, le=11)
     answer: bool
 
 

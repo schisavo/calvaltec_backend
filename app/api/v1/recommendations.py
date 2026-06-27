@@ -4,7 +4,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.schemas.recommendation import RecommendationCreate, RecommendationOut
 from app.services.access_service import assert_assessment_exists
+from app.repositories.recommendation_repository import (
+    get_recommendation_by_assessment as repo_get_recommendation,
+)
 from app.services.recommendation_service import (
+    _to_out,
     create_recommendation_data,
     delete_recommendation_data,
     get_recommendation_by_assessment,
@@ -26,6 +30,18 @@ def read_recommendation_by_assessment_id(
 ):
     assert_assessment_exists(db, assessment_id)
     return get_recommendation_by_assessment(db, assessment_id)
+
+
+@router.get("/recommendations/{assessment_id}/optional", response_model=RecommendationOut | None)
+def read_recommendation_optional(
+    assessment_id: int,
+    db: Session = Depends(get_db),
+):
+    assert_assessment_exists(db, assessment_id)
+    rec = repo_get_recommendation(db, assessment_id)
+    if not rec:
+        return None
+    return _to_out(rec)
 
 
 @router.get("/assessments/{assessment_id}/recommendations", response_model=RecommendationOut)

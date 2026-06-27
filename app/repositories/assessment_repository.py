@@ -1,14 +1,20 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.answer import Answer
 from app.models.assessment import Assessment
 from app.models.company import Company
+from app.models.compliance_progress import ComplianceProgress
 from app.models.recommendation import Recommendation
 from app.schemas.assessment import AssessmentCreate
 
 
 def get_assessment(db: Session, assessment_id: int):
-    assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
+    assessment = (
+        db.query(Assessment)
+        .options(joinedload(Assessment.company))
+        .filter(Assessment.id == assessment_id)
+        .first()
+    )
     if not assessment:
         return None, []
     answers = (
@@ -67,6 +73,17 @@ def delete_assessment(db: Session, assessment_id: int) -> bool:
     assessment = db.query(Assessment).filter(Assessment.id == assessment_id).first()
     if not assessment:
         return False
+
+    db.query(Answer).filter(Answer.assessment_id == assessment_id).delete(
+        synchronize_session=False
+    )
+    db.query(Recommendation).filter(Recommendation.assessment_id == assessment_id).delete(
+        synchronize_session=False
+    )
+    db.query(ComplianceProgress).filter(
+        ComplianceProgress.assessment_id == assessment_id
+    ).delete(synchronize_session=False)
+
     db.delete(assessment)
     db.commit()
     return True

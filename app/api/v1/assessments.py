@@ -8,6 +8,7 @@ from app.schemas.assessment import (
     AssessmentSummary,
     AssessmentUpdate,
 )
+from app.schemas.recommendation import GenerateRecommendationsRequest, RecommendationOut
 from app.services.access_service import assert_assessment_exists
 from app.services.assessment_list_service import list_assessments_summary
 from app.services.assessment_service import (
@@ -16,6 +17,8 @@ from app.services.assessment_service import (
     get_assessment_data,
     update_assessment_data,
 )
+from app.services.recommendation_service import get_recommendation_by_assessment
+from app.services.recommendation_trigger_service import generate_recommendations_for_assessment
 
 router = APIRouter()
 
@@ -43,6 +46,28 @@ def create_assessment_endpoint(
     db: Session = Depends(get_db),
 ):
     return create_assessment_data(db, payload)
+
+
+@router.post(
+    "/assessments/{assessment_id}/generate-recommendations",
+    response_model=RecommendationOut,
+    status_code=201,
+)
+def generate_recommendations_endpoint(
+    assessment_id: int,
+    payload: GenerateRecommendationsRequest,
+    db: Session = Depends(get_db),
+):
+    assert_assessment_exists(db, assessment_id)
+    return generate_recommendations_for_assessment(
+        db,
+        assessment_id,
+        puntaje=payload.puntaje,
+        estado=payload.estado,
+        brechas=payload.brechas,
+        recomendaciones=payload.recomendaciones,
+        empresa=payload.empresa,
+    )
 
 
 @router.put("/assessments/{assessment_id}", response_model=AssessmentOut)

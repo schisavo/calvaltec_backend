@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     N8N_CHAT_WEBHOOK_URL: str = (
         "https://smartteam2026.app.n8n.cloud/webhook/chat-assistant"
     )
+    N8N_RECOMMENDATIONS_WEBHOOK_URL: str = (
+        "https://smartteam2026.app.n8n.cloud/webhook/generate-recommendations"
+    )
     FRONTEND_URL: str = "http://localhost:5173"
     BACKEND_PUBLIC_URL: str | None = None
 
