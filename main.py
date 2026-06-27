@@ -2,7 +2,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.openapi.utils import get_openapi
 
 from app.api.v1 import assessments, auth, chat, companies, compliance, n8n_routes, recommendations, users
 from app.core.database import init_db
@@ -28,36 +27,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        description=app.description,
-        routes=app.routes,
-    )
-    schema["components"]["securitySchemes"] = {
-        "N8nApiKey": {
-            "type": "apiKey",
-            "in": "header",
-            "name": "x-api-key",
-            "description": "Clave para llamadas HTTP desde n8n (API_KEY_SECRET).",
-        },
-        "BearerAuth": {
-            "type": "http",
-            "scheme": "bearer",
-            "bearerFormat": "JWT",
-            "description": "Token JWT obtenido en POST /api/v1/auth/login.",
-        },
-    }
-    app.openapi_schema = schema
-    return app.openapi_schema
-
-
-app.openapi = custom_openapi
 
 
 @app.get("/")

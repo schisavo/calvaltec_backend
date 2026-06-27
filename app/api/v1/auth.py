@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.auth_deps import get_current_user, require_roles
+from app.api.auth_deps import get_current_user_optional
 from app.api.deps import get_db
 from app.core.security import create_access_token, verify_password
 from app.models.company import Company
@@ -59,7 +59,12 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
 
 @router.get("/auth/me", response_model=UserOut)
-def me(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+def me(
+    user: User | None = Depends(get_current_user_optional),
+    db: Session = Depends(get_db),
+):
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sesión no encontrada")
     return _user_response(db, user)
 
 
@@ -70,14 +75,13 @@ def forgot_password(_: ForgotPasswordRequest):
     )
 
 @router.get("/users", response_model=list[UserOut])
-def list_users_endpoint(_: User = Depends(require_roles("admin")), db: Session = Depends(get_db)):
+def list_users_endpoint(db: Session = Depends(get_db)):
     return list_users_data(db)
 
 
 @router.post("/users", response_model=UserOut, status_code=201)
 def create_user_endpoint(
     payload: AdminUserCreate,
-    _: User = Depends(require_roles("admin")),
     db: Session = Depends(get_db),
 ):
     return create_user_admin(db, payload)

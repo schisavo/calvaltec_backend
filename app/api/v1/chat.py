@@ -5,7 +5,7 @@ import urllib.request
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.api.auth_deps import get_current_user
+from app.api.auth_deps import get_current_user_optional
 from app.api.deps import get_db
 from app.core.config import settings
 from app.models.company import Company
@@ -94,7 +94,7 @@ def _forward_to_n8n(payload: dict) -> dict:
 def chat_with_assistant(
     payload: ChatMessageIn,
     request: Request,
-    user: User = Depends(get_current_user),
+    user: User | None = Depends(get_current_user_optional),
     db: Session = Depends(get_db),
 ):
     auth_header = request.headers.get("Authorization", "")
@@ -107,7 +107,7 @@ def chat_with_assistant(
         "message": payload.message,
         "session_id": payload.session_id,
         "history": [item.model_dump() for item in payload.history],
-        "user": _user_payload(db, user),
+        "user": _user_payload(db, user) if user else {},
         "access_token": access_token,
         "api_url": api_url,
         "context": context,
