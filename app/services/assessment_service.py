@@ -53,7 +53,11 @@ def create_assessment_data(db: Session, payload: AssessmentCreate) -> Assessment
     if len(payload.answers) != 8:
         raise HTTPException(status_code=400, detail="Se requieren exactamente 8 respuestas")
 
-    new_assessment = create_assessment(db, payload)
+    try:
+        new_assessment = create_assessment(db, payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     _, answers = get_assessment(db, new_assessment.id)
     return _to_assessment_out(new_assessment, answers)
 
