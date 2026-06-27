@@ -24,6 +24,11 @@ from app.services.company_user_service import ensure_user_company
 from app.services.user_admin_service import create_user_admin, list_users_data
 from app.core.oauth import oauth
 from app.services.oauth_service import oauth_login_service
+from app.services.oauth_state_service import (
+    clear_oauth_session_state,
+    persist_oauth_session_states,
+    restore_oauth_session_state,
+)
 
 router = APIRouter()
 
@@ -114,12 +119,14 @@ def _google_callback_url(request: Request) -> str:
 
 
 @router.get("/auth/oauth/google")
-async def login_google(request: Request):
+async def login_google(request: Request, db: Session = Depends(get_db)):
     _require_google_oauth_config()
     try:
-        return await oauth.google.authorize_redirect(
+        response = await oauth.google.authorize_redirect(
             request, _google_callback_url(request)
         )
+        persist_oauth_session_states(request, db)
+        return response
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -130,6 +137,7 @@ async def login_google(request: Request):
 @router.get("/auth/oauth/google/callback", name="auth_google_callback")
 async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
     _require_google_oauth_config()
+    restore_oauth_session_state(request, db)
     try:
         token = await oauth.google.authorize_access_token(request)
     except Exception as exc:
@@ -137,6 +145,8 @@ async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"No se pudo completar el inicio de sesión con Google: {exc}",
         ) from exc
+    finally:
+        clear_oauth_session_state(request, db)
 
     auth_response = oauth_login_service(db, token.get("userinfo"))
     frontend = settings.FRONTEND_URL.rstrip("/")

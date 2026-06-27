@@ -30,7 +30,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
+_is_https = bool(
+    settings.BACKEND_PUBLIC_URL and settings.BACKEND_PUBLIC_URL.startswith("https://")
+)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.JWT_SECRET,
+    max_age=900,
+    same_site="none" if _is_https else "lax",
+    https_only=_is_https,
+)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
 
 
