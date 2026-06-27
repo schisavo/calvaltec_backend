@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
+from urllib.parse import urlencode
 
 from app.api.auth_deps import get_current_user_optional
 from app.api.deps import get_db
+from app.core.config import settings
 from app.core.security import create_access_token, verify_password
 from app.models.company import Company
 from app.models.user import User
@@ -89,16 +92,44 @@ def create_user_endpoint(
 
 
 
-# ************  OAuth routes  ************ 
+# ************  OAuth routes  ************
+
+def _require_google_oauth_config() -> None:
+    if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "Google OAuth no está configurado en el servidor. "
+                "Define GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET."
+            ),
+        )
+
 
 @router.get("/auth/oauth/google")
 async def login_google(request: Request):
+    _require_google_oauth_config()
     redirect_uri = request.url_for("auth_google_callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
-@router.get("/auth/oauth/google/callback")
+
+@router.get("/auth/oauth/google/callback", name="auth_google_callback")
 async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
-    token = await oauth.google.authorize_access_token(request)
-    user_info = token.get("userinfo")
-    return oauth_login_service(db, user_info)
+    _require_google_oauth_config()
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No se pudo completar el inicio de sesión con Google: {exc}",
+        ) from exc
+
+    auth_response = oauth_login_service(db, token.get("userinfo"))
+    frontend = settings.FRONTEND_URL.rstrip("/")
+    query = urlencode(
+        {
+            "access_token": auth_response.access_token,
+            "expires_in": auth_response.expires_in,
+        }
+    )
+    return RedirectResponse(url=f"{frontend}/oauth/callback?{query}")
 

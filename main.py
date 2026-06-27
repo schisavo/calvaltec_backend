@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.api.v1 import assessments, auth, chat, companies, compliance, n8n_routes, recommendations, users
+from app.core.config import settings
 from app.core.database import init_db
 
 
@@ -27,6 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET)
 
 
 @app.get("/")
