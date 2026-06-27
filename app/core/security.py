@@ -6,10 +6,6 @@ from joserfc.jwk import OctKey
 from app.core.config import settings
 from fastapi import Header, HTTPException, status
 from app.core.config import settings
-from fastapi import Security, HTTPException, status
-from fastapi.security.api_key import APIKeyHeader
-from app.core.config import settings
-
 
 TOKEN_EXPIRE_HOURS = 24
 
@@ -52,13 +48,3 @@ def verify_api_key(x_api_key: str = Header(...)):
             detail="API Key inválida"
         )
     return True
-
-api_key_header = APIKeyHeader(name="x-api-key", auto_error=True)
-
-def get_api_key(x_api_key: str = Security(api_key_header)):
-    if x_api_key != settings.API_KEY_SECRET:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API Key inválida"
-        )
-    return x_api_key
