@@ -2,9 +2,11 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
 
-from app.api.v1 import assessments, auth, chat, companies, recommendations, users
+from app.api.v1 import assessments, auth, chat, companies, compliance, recommendations, users
 from app.core.database import init_db
+from app.core.swagger_auth import SwaggerApiKeyMiddleware
 
 
 @asynccontextmanager
@@ -29,6 +31,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(SwaggerApiKeyMiddleware)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    schema["components"]["securitySchemes"] = {
+        "SwaggerApiKey": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "Clave para acceder a la documentación Swagger (/docs).",
+        },
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "Token JWT obtenido en POST /api/v1/auth/login.",
+        },
+    }
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 
 @app.get("/")
@@ -42,6 +75,7 @@ app.include_router(users.router, prefix="/api/v1", tags=["users"])
 app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
+app.include_router(compliance.router, prefix="/api/v1", tags=["compliance"])
 
 
 # uvicorn main:app --reload
