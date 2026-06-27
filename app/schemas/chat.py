@@ -8,6 +8,11 @@ class ChatHistoryItem(BaseModel):
 
 class ChatContext(BaseModel):
     pathname: str = ""
+    source: str | None = None
+    help_type: str | None = None
+    question_id: int | None = None
+    question_text: str | None = None
+    question_block: str | None = None
 
 
 class ChatMessageIn(BaseModel):
