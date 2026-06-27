@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 import urllib.error
 import urllib.request
 from typing import Any
@@ -43,7 +44,7 @@ def _should_trigger_n8n() -> bool:
     return bool(webhook) and public_url.startswith("https://")
 
 
-def _trigger_n8n_async(assessment_id: int, assessment_payload: dict[str, Any]) -> None:
+def _trigger_n8n_webhook(assessment_id: int, assessment_payload: dict[str, Any]) -> None:
     webhook = settings.N8N_RECOMMENDATIONS_WEBHOOK_URL
     public_url = (settings.BACKEND_PUBLIC_URL or "").rstrip("/")
     body = json.dumps(
@@ -60,13 +61,22 @@ def _trigger_n8n_async(assessment_id: int, assessment_payload: dict[str, Any]) -
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=90) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             resp.read()
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")[:300]
         logger.warning("n8n recommendations webhook HTTP %s: %s", exc.code, detail)
     except Exception as exc:
         logger.warning("n8n recommendations webhook failed: %s", exc)
+
+
+def _schedule_n8n_trigger(assessment_id: int, assessment_payload: dict[str, Any]) -> None:
+    thread = threading.Thread(
+        target=_trigger_n8n_webhook,
+        args=(assessment_id, assessment_payload),
+        daemon=True,
+    )
+    thread.start()
 
 
 def generate_recommendations_for_assessment(
@@ -94,6 +104,6 @@ def generate_recommendations_for_assessment(
 
     if _should_trigger_n8n():
         assessment_payload = assessment_out.model_dump(mode="json")
-        _trigger_n8n_async(assessment_id, assessment_payload)
+        _schedule_n8n_trigger(assessment_id, assessment_payload)
 
     return _to_out(rec)
