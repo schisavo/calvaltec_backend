@@ -1,7 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.security import hash_password
 from app.models.company import Company
 from app.repositories.user_repository import create_user, get_user_by_email, list_users
 from app.schemas.auth import AdminUserCreate, UserOut
@@ -33,9 +32,9 @@ def create_user_admin(db: Session, payload: AdminUserCreate) -> UserOut:
         raise HTTPException(status_code=409, detail="El correo ya está registrado")
     user = create_user(
         db,
-        email=payload.email.lower(),
-        password_hash=hash_password(payload.password),
-        name=payload.name,
-        role=payload.role,
+        payload.email.lower(),
+        payload.password,
+        payload.name,
+        payload.role,
     )
     return _user_out(db, user)

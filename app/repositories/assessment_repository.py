@@ -4,7 +4,7 @@ from app.models.answer import Answer
 from app.models.assessment import Assessment
 from app.models.company import Company
 from app.models.recommendation import Recommendation
-from app.schemas.assessment import AssessmentCreate, RecommendationCreate
+from app.schemas.assessment import AssessmentCreate
 
 
 def get_assessment(db: Session, assessment_id: int):
@@ -85,14 +85,3 @@ def list_assessments(db: Session, company_id: int | None = None, limit: int = 10
     if company_id is not None:
         q = q.filter(Assessment.company_id == company_id)
     return q.limit(limit).all()
-
-
-def create_recommendation(db: Session, payload: RecommendationCreate) -> Recommendation:
-    recommendation = Recommendation(
-        assessment_id=payload.assessment_id,
-        report=payload.report,
-    )
-    db.add(recommendation)
-    db.commit()
-    db.refresh(recommendation)
-    return recommendation

@@ -3,10 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.repositories.assessment_repository import (
     create_assessment,
-    create_recommendation,
     delete_assessment,
     get_assessment,
-    get_recommendation,
     update_assessment,
 )
 from app.schemas.assessment import (
@@ -77,36 +75,3 @@ def delete_assessment_data(db: Session, assessment_id: int) -> dict:
     if not deleted:
         raise HTTPException(status_code=404, detail="Assessment no encontrado")
     return {"message": f"Assessment {assessment_id} eliminado"}
-
-
-def get_recommendation_data(db: Session, assessment_id: int) -> RecommendationOut:
-    recommendation = get_recommendation(db, assessment_id)
-    if not recommendation:
-        raise HTTPException(status_code=404, detail="Recomendación no encontrada")
-    return RecommendationOut(
-        id=recommendation.id,
-        assessment_id=recommendation.assessment_id,
-        report=recommendation.report,
-        created_at=recommendation.created_at,
-    )
-
-
-def create_recommendation_data(db: Session, payload: RecommendationCreate) -> RecommendationOut:
-    assessment, _ = get_assessment(db, payload.assessment_id)
-    if not assessment:
-        raise HTTPException(status_code=404, detail="Assessment no encontrado")
-
-    existing = get_recommendation(db, payload.assessment_id)
-    if existing:
-        raise HTTPException(
-            status_code=409,
-            detail="Ya existe una recomendación para este assessment",
-        )
-
-    recommendation = create_recommendation(db, payload)
-    return RecommendationOut(
-        id=recommendation.id,
-        assessment_id=recommendation.assessment_id,
-        report=recommendation.report,
-        created_at=recommendation.created_at,
-    )
