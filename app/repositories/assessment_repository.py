@@ -21,14 +21,19 @@ def get_assessment(db: Session, assessment_id: int):
 
 
 def create_assessment(db: Session, payload: AssessmentCreate) -> Assessment:
-    company = Company(
-        name=payload.company.name,
-        email=payload.company.email,
-        nit=payload.company.nit,
-        sector=payload.company.sector,
-    )
-    db.add(company)
-    db.flush()
+    if payload.company_id:
+        company = db.query(Company).filter(Company.id == payload.company_id).first()
+        if not company:
+            raise ValueError(f"Empresa {payload.company_id} no encontrada")
+    else:
+        company = Company(
+            name=payload.company.name,
+            email=payload.company.email,
+            nit=payload.company.nit,
+            sector=payload.company.sector,
+        )
+        db.add(company)
+        db.flush()
 
     assessment = Assessment(company_id=company.id, score=payload.score)
     db.add(assessment)
@@ -73,6 +78,13 @@ def get_recommendation(db: Session, assessment_id: int) -> Recommendation | None
         .filter(Recommendation.assessment_id == assessment_id)
         .first()
     )
+
+
+def list_assessments(db: Session, company_id: int | None = None, limit: int = 100) -> list[Assessment]:
+    q = db.query(Assessment).order_by(Assessment.created_at.desc())
+    if company_id is not None:
+        q = q.filter(Assessment.company_id == company_id)
+    return q.limit(limit).all()
 
 
 def create_recommendation(db: Session, payload: RecommendationCreate) -> Recommendation:
