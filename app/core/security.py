@@ -1,14 +1,13 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
-
 from joserfc import jwt
 from joserfc.jwk import OctKey
-
+from app.core.config import settings
+from fastapi import Header, HTTPException, status
 from app.core.config import settings
 
 TOKEN_EXPIRE_HOURS = 24
-
 
 def _jwt_key() -> OctKey:
     return OctKey.import_key(settings.JWT_SECRET)
@@ -40,3 +39,12 @@ def create_access_token(*, user_id: int, email: str, role: str) -> tuple[str, in
 def decode_access_token(token: str) -> dict:
     decoded = jwt.decode(token, _jwt_key())
     return dict(decoded.claims)
+
+# Clave flujos n8n
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != settings.API_KEY_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API Key inválida"
+        )
+    return True

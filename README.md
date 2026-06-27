@@ -31,8 +31,6 @@ API REST moderna con FastAPI, SQLAlchemy/SQLModel, Alembic, Supabase (PostgreSQL
     DATABASE_URL=postgresql+psycopg2://usuario:password@host:5432/postgres
     GOOGLE_CLIENT_ID=xxxx
     GOOGLE_CLIENT_SECRET=xxxx
-    MICROSOFT_CLIENT_ID=xxxx
-    MICROSOFT_CLIENT_SECRET=xxxx
     OPENAI_API_KEY=xxxx
     REDIS_URL=redis://localhost:6379
 

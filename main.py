@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from app.api.v1 import assessments, auth, chat, companies, compliance, recommendations, users
+from app.api.v1 import assessments, auth, chat, companies, compliance, n8n_routes, recommendations, users
 from app.core.database import init_db
 from app.core.swagger_auth import SwaggerApiKeyMiddleware
 
@@ -77,5 +77,5 @@ app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendati
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(compliance.router, prefix="/api/v1", tags=["compliance"])
 
-
+app.include_router(n8n_routes.router, prefix="/api/v1", tags=["n8n"])
 # uvicorn main:app --reload
