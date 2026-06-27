@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str | None = None
     OPENAI_API_KEY: str | None = None
     REDIS_URL: str | None = None
-    API_KEY_SECRET: str | None = None
+    API_KEY_SECRET: str = "26yusesaal06secaval2026"
     N8N_CHAT_WEBHOOK_URL: str = (
         "https://smartteam2026.app.n8n.cloud/webhook/chat-assistant"
     )
