@@ -72,6 +72,5 @@ app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 app.include_router(compliance.router, prefix="/api/v1", tags=["compliance"])
-
 app.include_router(n8n_routes.router, prefix="/api/v1", tags=["n8n"])
 # uvicorn main:app --reload
