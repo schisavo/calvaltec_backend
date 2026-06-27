@@ -13,7 +13,6 @@ class Settings(BaseSettings):
     N8N_CHAT_WEBHOOK_URL: str = (
         "https://smartteam2026.app.n8n.cloud/webhook/chat-assistant"
     )
-    SWAGGER_API_KEY: str = "26yusesaal06secaval2026"
 
     @field_validator("DATABASE_URL", mode="after")
     @classmethod
