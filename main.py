@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import assessments, auth, chat, companies, recommendations, users
+from app.api.v1 import assessments, auth, chat, companies, recommendations, users, n8n_routes
 from app.core.database import init_db
 
 
@@ -43,5 +43,5 @@ app.include_router(assessments.router, prefix="/api/v1", tags=["assessments"])
 app.include_router(recommendations.router, prefix="/api/v1", tags=["recommendations"])
 app.include_router(chat.router, prefix="/api/v1", tags=["chat"])
 
-
+app.include_router(n8n_routes.router, prefix="/api/v1", tags=["n8n"])
 # uvicorn main:app --reload
