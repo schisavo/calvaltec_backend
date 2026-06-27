@@ -7,15 +7,14 @@ from app.core.security import decode_access_token
 from app.models.user import User
 from app.repositories.user_repository import get_user_by_email, get_user_by_id
 
-bearer_scheme = HTTPBearer(auto_error=False)
+bearer_scheme = HTTPBearer()
+bearer_scheme_optional = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: Session = Depends(get_db),
 ) -> User:
-    if not credentials:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="No autenticado")
     try:
         claims = decode_access_token(credentials.credentials)
         user_id = int(claims["sub"])
@@ -29,7 +28,7 @@ def get_current_user(
 
 
 def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme_optional),
     db: Session = Depends(get_db),
 ) -> User | None:
     if not credentials:
