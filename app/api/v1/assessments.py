@@ -8,7 +8,7 @@ from app.schemas.assessment import (
     AssessmentSummary,
     AssessmentUpdate,
 )
-from app.schemas.recommendation import GenerateRecommendationsRequest, RecommendationOut
+from app.schemas.recommendation import GenerateRecommendationsRequest, GenerateRecommendationsOut
 from app.services.access_service import assert_assessment_exists
 from app.services.assessment_list_service import list_assessments_summary
 from app.services.assessment_service import (
@@ -50,7 +50,7 @@ def create_assessment_endpoint(
 
 @router.post(
     "/assessments/{assessment_id}/generate-recommendations",
-    response_model=RecommendationOut,
+    response_model=GenerateRecommendationsOut,
     status_code=201,
 )
 def generate_recommendations_endpoint(
@@ -59,7 +59,7 @@ def generate_recommendations_endpoint(
     db: Session = Depends(get_db),
 ):
     assert_assessment_exists(db, assessment_id)
-    return generate_recommendations_for_assessment(
+    rec = generate_recommendations_for_assessment(
         db,
         assessment_id,
         puntaje=payload.puntaje,
@@ -68,6 +68,7 @@ def generate_recommendations_endpoint(
         recomendaciones=payload.recomendaciones,
         empresa=payload.empresa,
     )
+    return rec
 
 
 @router.put("/assessments/{assessment_id}", response_model=AssessmentOut)

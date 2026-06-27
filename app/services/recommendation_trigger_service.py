@@ -7,7 +7,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.repositories.recommendation_repository import create_recommendation
-from app.schemas.recommendation import RecommendationCreate, RecommendationOut
+from app.schemas.recommendation import RecommendationCreate, GenerateRecommendationsOut
 from app.services.assessment_service import get_assessment_data
 from app.services.recommendation_service import _to_out
 from sqlalchemy.orm import Session
@@ -35,6 +35,7 @@ def build_fallback_report(
         "nivel_riesgo": nivel,
         "recomendaciones": recomendaciones
         or ["Elaborar un plan de acción para cerrar las brechas identificadas."],
+        "source": "fallback",
     }
 
 
@@ -88,7 +89,7 @@ def generate_recommendations_for_assessment(
     brechas: list[str],
     recomendaciones: list[str],
     empresa: str | None = None,
-) -> RecommendationOut:
+) -> GenerateRecommendationsOut:
     assessment_out = get_assessment_data(db, assessment_id)
     report = build_fallback_report(
         puntaje=puntaje,
@@ -102,8 +103,9 @@ def generate_recommendations_for_assessment(
         RecommendationCreate(assessment_id=assessment_id, report=report),
     )
 
-    if _should_trigger_n8n():
+    n8n_pending = _should_trigger_n8n()
+    if n8n_pending:
         assessment_payload = assessment_out.model_dump(mode="json")
         _schedule_n8n_trigger(assessment_id, assessment_payload)
 
-    return _to_out(rec)
+    return GenerateRecommendationsOut(**_to_out(rec).model_dump(), n8n_pending=n8n_pending)

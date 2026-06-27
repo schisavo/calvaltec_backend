@@ -16,6 +16,12 @@ class RecommendationOut(BaseModel):
     created_at: datetime
 
 
+class GenerateRecommendationsOut(RecommendationOut):
+    """Respuesta al crear recomendaciones; indica si n8n sigue procesando."""
+
+    n8n_pending: bool = False
+
+
 class GenerateRecommendationsRequest(BaseModel):
     puntaje: float = Field(ge=0, le=100)
     estado: str
