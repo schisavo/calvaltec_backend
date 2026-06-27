@@ -12,5 +12,6 @@ class OAuthState(SQLModel, table=True):
 
     state: str = Field(primary_key=True, max_length=128)
     payload: dict = Field(sa_column=Column(JSON, nullable=False))
+    return_origin: str | None = Field(default=None, max_length=512)
     expires_at: datetime = Field(index=True)
     created_at: datetime = Field(default_factory=utc_now)

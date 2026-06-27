@@ -12,15 +12,25 @@ def purge_expired_oauth_states(db: Session) -> None:
     db.query(OAuthState).filter(OAuthState.expires_at < now).delete(synchronize_session=False)
 
 
-def save_oauth_state(db: Session, state: str, payload: dict) -> None:
+def save_oauth_state(
+    db: Session, state: str, payload: dict, return_origin: str | None = None
+) -> None:
     purge_expired_oauth_states(db)
     expires_at = datetime.now(timezone.utc) + OAUTH_STATE_TTL
     row = db.get(OAuthState, state)
     if row:
         row.payload = payload
+        row.return_origin = return_origin
         row.expires_at = expires_at
     else:
-        db.add(OAuthState(state=state, payload=payload, expires_at=expires_at))
+        db.add(
+            OAuthState(
+                state=state,
+                payload=payload,
+                return_origin=return_origin,
+                expires_at=expires_at,
+            )
+        )
     db.commit()
 
 

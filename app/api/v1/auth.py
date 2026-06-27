@@ -27,6 +27,7 @@ from app.services.oauth_service import oauth_login_service
 from app.services.oauth_state_service import (
     clear_oauth_session_state,
     persist_oauth_session_states,
+    resolve_frontend_return_url,
     restore_oauth_session_state,
 )
 
@@ -121,11 +122,12 @@ def _google_callback_url(request: Request) -> str:
 @router.get("/auth/oauth/google")
 async def login_google(request: Request, db: Session = Depends(get_db)):
     _require_google_oauth_config()
+    return_origin = request.query_params.get("return_origin")
     try:
         response = await oauth.google.authorize_redirect(
             request, _google_callback_url(request)
         )
-        persist_oauth_session_states(request, db)
+        persist_oauth_session_states(request, db, return_origin=return_origin)
         return response
     except Exception as exc:
         raise HTTPException(
@@ -138,6 +140,7 @@ async def login_google(request: Request, db: Session = Depends(get_db)):
 async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
     _require_google_oauth_config()
     restore_oauth_session_state(request, db)
+    frontend = resolve_frontend_return_url(request, db)
     try:
         token = await oauth.google.authorize_access_token(request)
     except Exception as exc:
@@ -149,7 +152,6 @@ async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
         clear_oauth_session_state(request, db)
 
     auth_response = oauth_login_service(db, token.get("userinfo"))
-    frontend = settings.FRONTEND_URL.rstrip("/")
     query = urlencode(
         {
             "access_token": auth_response.access_token,

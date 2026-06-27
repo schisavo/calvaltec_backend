@@ -32,6 +32,7 @@ def _ensure_schema_updates() -> None:
     statements = [
         "ALTER TABLE companies ADD COLUMN IF NOT EXISTS size VARCHAR DEFAULT 'mediana'",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS company_id INTEGER REFERENCES companies(id)",
+        "ALTER TABLE oauth_states ADD COLUMN IF NOT EXISTS return_origin VARCHAR(512)",
     ]
     with engine.begin() as conn:
         for stmt in statements:
