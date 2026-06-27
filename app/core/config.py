@@ -1,8 +1,19 @@
+from pathlib import Path
+
 from pydantic import field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_BACKEND_ROOT = Path(__file__).resolve().parents[2]
+_ENV_FILE = _BACKEND_ROOT / ".env"
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=_ENV_FILE if _ENV_FILE.is_file() else None,
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     DATABASE_URL: str
     JWT_SECRET: str = "cavaltec-dev-secret-change-in-production"
     GOOGLE_CLIENT_ID: str | None = None
@@ -14,6 +25,7 @@ class Settings(BaseSettings):
         "https://smartteam2026.app.n8n.cloud/webhook/chat-assistant"
     )
     FRONTEND_URL: str = "http://localhost:5173"
+    BACKEND_PUBLIC_URL: str | None = None
 
     @field_validator("DATABASE_URL", mode="after")
     @classmethod
@@ -25,9 +37,6 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         return self.DATABASE_URL
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()

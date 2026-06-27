@@ -22,7 +22,6 @@ from app.schemas.auth import (
 from app.services.auth_service import _user_out, register_company_user
 from app.services.company_user_service import ensure_user_company
 from app.services.user_admin_service import create_user_admin, list_users_data
-from fastapi import Request, Depends
 from app.core.oauth import oauth
 from app.services.oauth_service import oauth_login_service
 
@@ -105,11 +104,27 @@ def _require_google_oauth_config() -> None:
         )
 
 
+def _google_callback_url(request: Request) -> str:
+    if settings.BACKEND_PUBLIC_URL:
+        return f"{settings.BACKEND_PUBLIC_URL.rstrip('/')}/api/v1/auth/oauth/google/callback"
+    redirect_uri = str(request.url_for("auth_google_callback"))
+    if request.headers.get("x-forwarded-proto") == "https" and redirect_uri.startswith("http://"):
+        return redirect_uri.replace("http://", "https://", 1)
+    return redirect_uri
+
+
 @router.get("/auth/oauth/google")
 async def login_google(request: Request):
     _require_google_oauth_config()
-    redirect_uri = request.url_for("auth_google_callback")
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    try:
+        return await oauth.google.authorize_redirect(
+            request, _google_callback_url(request)
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"No se pudo iniciar el inicio de sesión con Google: {exc}",
+        ) from exc
 
 
 @router.get("/auth/oauth/google/callback", name="auth_google_callback")
