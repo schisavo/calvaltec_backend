@@ -19,6 +19,9 @@ from app.schemas.auth import (
 from app.services.auth_service import _user_out, register_company_user
 from app.services.company_user_service import ensure_user_company
 from app.services.user_admin_service import create_user_admin, list_users_data
+from fastapi import Request, Depends
+from app.core.oauth import oauth
+from app.services.oauth_service import oauth_login_service
 
 router = APIRouter()
 
@@ -66,15 +69,6 @@ def forgot_password(_: ForgotPasswordRequest):
         message="Si el correo existe, recibirás instrucciones para restablecer tu contraseña."
     )
 
-
-@router.get("/auth/oauth/{provider}")
-def oauth_redirect(provider: str):
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail=f"OAuth con {provider} disponible próximamente. Usa correo y contraseña.",
-    )
-
-
 @router.get("/users", response_model=list[UserOut])
 def list_users_endpoint(_: User = Depends(require_roles("admin")), db: Session = Depends(get_db)):
     return list_users_data(db)
@@ -87,3 +81,20 @@ def create_user_endpoint(
     db: Session = Depends(get_db),
 ):
     return create_user_admin(db, payload)
+
+
+
+
+# ************  OAuth routes  ************ 
+
+@router.get("/auth/oauth/google")
+async def login_google(request: Request):
+    redirect_uri = request.url_for("auth_google_callback")
+    return await oauth.google.authorize_redirect(request, redirect_uri)
+
+@router.get("/auth/oauth/google/callback")
+async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
+    token = await oauth.google.authorize_access_token(request)
+    user_info = token.get("userinfo")
+    return oauth_login_service(db, user_info)
+
